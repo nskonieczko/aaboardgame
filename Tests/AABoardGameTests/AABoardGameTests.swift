@@ -17,6 +17,6 @@ final class AABoardGameTests: XCTestCase {
     func testExample() throws {
         gameEngine.startGame()
         
-        gameEngine.nextTurn()
+        gameEngine.currentPlayer.purchaseUnit(unit: .init(type: .battleship, attack: <#T##Int#>, defense: <#T##Int#>, movement: <#T##Int#>, cost: <#T##Int#>), to: <#T##Territory#>)
     }
 }

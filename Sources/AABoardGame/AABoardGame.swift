@@ -3,7 +3,7 @@ import Foundation
 // Unit Class
 class Unit: Hashable, Equatable {
     enum UnitType: Hashable {
-        case infantry, tank, fighter, bomber, battleship
+        case infantry, tank, fighter, bomber, battleship // what are all these fuckling things
     }
     
     let type: UnitType
@@ -39,10 +39,19 @@ class Unit: Hashable, Equatable {
 
 // Territory Class
 class Territory: Hashable, Equatable {
+    enum Category: String {
+        case land
+        case sea
+        case inpassable
+        case unknown
+    }
+    
     let name: String
     var owner: Player?
     var units: Set<Unit> = []
     var adjacentTerritories: Set<Territory> = []
+    var industrialOutput: Int = 0
+    var `type`: Territory.Category = .unknown
     
     init(name: String) {
         self.name = name
@@ -76,6 +85,7 @@ class Player {
     var territories: Set<Territory> = []
     var units: Set<Unit> = []
     var purchaseQueue: [(Unit, Territory)] = []
+    var wallet: Int = 0
     
     init(name: String, resources: Int) {
         self.name = name
@@ -111,6 +121,12 @@ class Board {
     var territories: Set<Territory> = []
     
     func initializeBoard() {
+        /*
+         All countries
+         all adjacent counties to each one.
+         Territory: USA
+            Adjacent: Mexico, Canada
+         */
         let territoryNames = [
             "Eastern United States", "Western United States", "Central United States",
             "Canada", "Mexico", "United Kingdom", "Western Europe", "Eastern Europe",
@@ -164,6 +180,10 @@ class GameEngine {
     var board: Board
     var players: [Player]
     var currentPlayerIndex: Int = 0
+    
+    var currentPlayer: Player {
+        players[currentPlayerIndex]
+    }
     
     init(board: Board, players: [Player]) {
         self.board = board
@@ -221,6 +241,11 @@ class GameEngine {
             from.removeUnit(unit: unit)
             to.addUnit(unit: unit)
         }
+        
+        /*
+
+         
+         */
         print("\(units.count) units moved from \(from.name) to \(to.name)")
     }
     
