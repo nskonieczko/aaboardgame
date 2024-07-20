@@ -15,7 +15,7 @@ public enum PlayerError: Error {
     }
 }
 
-public protocol Player: AnyObject {
+internal protocol AnyPlayer: AnyObject, Codable {
     var id: UUID { get }
     var name: String { get }
     var territories: Set<Territory>  { get set }
@@ -24,114 +24,52 @@ public protocol Player: AnyObject {
     var wallet: Int { get set }
 }
 
-public class AnyPlayer: Player, Codable {
-    private let _getId: () -> UUID
-    private let _getName: () -> String
-    private let _getTerritories: () -> Set<Territory>
-    private let _setTerritories: (Set<Territory>) -> Void
-    private let _getUnits: () -> [AnyUnit]
-    private let _setUnits: ([AnyUnit]) -> Void
-    private let _getPurchaseQueue: () -> [AnyUnit]
-    private let _setPurchaseQueue: ([AnyUnit]) -> Void
-    private let _getWallet: () -> Int
-    private let _setWallet: (Int) -> Void
-    
-    public var id: UUID {
-        return _getId()
-    }
-    
-    public var name: String {
-        return _getName()
-    }
-    
-    public var territories: Set<Territory> {
-        get {
-            return _getTerritories()
-        }
-        set {
-            _setTerritories(newValue)
-        }
-    }
-    
-    public var units: [AnyUnit] {
-        get {
-            return _getUnits()
-        }
-        set {
-            _setUnits(newValue)
-        }
-    }
-    
-    public var purchaseQueue: [AnyUnit] {
-        get {
-            return _getPurchaseQueue()
-        }
-        set {
-            _setPurchaseQueue(newValue)
-        }
-    }
-    
-    public var wallet: Int {
-        get {
-            return _getWallet()
-        }
-        set {
-            _setWallet(newValue)
-        }
-    }
-    
-    public init<P: Player>(_ player: P) {
-        _getId = { player.id }
-        _getName = { player.name }
-        _getTerritories = { player.territories }
-        _setTerritories = { player.territories = $0 }
-        _getUnits = { player.units }
-        _setUnits = { player.units = $0 }
-        _getPurchaseQueue = { player.purchaseQueue }
-        _setPurchaseQueue = { player.purchaseQueue = $0 }
-        _getWallet = { player.wallet }
-        _setWallet = { player.wallet = $0 }
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(territories, forKey: .territories)
-        try container.encode(units, forKey: .units)
-        try container.encode(purchaseQueue, forKey: .purchaseQueue)
-        try container.encode(wallet, forKey: .wallet)
-    }
-    
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let id = try container.decode(UUID.self, forKey: .id)
-        let name = try container.decode(String.self, forKey: .name)
-        let territories = try container.decode(Set<Territory>.self, forKey: .territories)
-        let units = try container.decode([AnyUnit].self, forKey: .units)
-        let purchaseQueue = try container.decode([AnyUnit].self, forKey: .purchaseQueue)
-        let wallet = try container.decode(Int.self, forKey: .wallet)
+public class Player: AnyPlayer {
+    public var id: UUID
+    public var name: String
+    public var territories: Set<Territory>
+    public var units: [AnyUnit]
+    public var purchaseQueue: [AnyUnit]
+    public var wallet: Int
+
+    public init(id: UUID = UUID(), 
+                name: String,
+                territories: Set<Territory> = [],
+                units: [AnyUnit] = [],
+                purchaseQueue: [AnyUnit] = [],
+                wallet: Int = 0) {
         
-        _getId = { id }
-        _getName = { name }
-        _getTerritories = { territories }
-        _setTerritories = { _ in }
-        _getUnits = { units }
-        _setUnits = { _ in }
-        _getPurchaseQueue = { purchaseQueue }
-        _setPurchaseQueue = { _ in }
-        _getWallet = { wallet }
-        _setWallet = { _ in }
+        self.id = id
+        self.name = name
+        self.territories = territories
+        self.units = units
+        self.purchaseQueue = purchaseQueue
+        self.wallet = wallet
     }
-    
-    private enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case territories
-        case units
-        case purchaseQueue
-        case wallet
-    }
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case id, name, territories, units, purchaseQueue, wallet
+//    }
+
+//    public required init(from decoder: Decoder) throws {
+//        let container = try decoder.container(keyedBy: CodingKeys.self)
+//        id = try container.decode(UUID.self, forKey: .id)
+//        name = try container.decode(String.self, forKey: .name)
+//        territories = try container.decode(Set<Territory>.self, forKey: .territories)
+//        units = try container.decode([AnyUnit].self, forKey: .units)
+//        purchaseQueue = try container.decode([AnyUnit].self, forKey: .purchaseQueue)
+//        wallet = try container.decode(Int.self, forKey: .wallet)
+//    }
+//
+//    public func encode(to encoder: Encoder) throws {
+//        var container = encoder.container(keyedBy: CodingKeys.self)
+//        try container.encode(id, forKey: .id)
+//        try container.encode(name, forKey: .name)
+//        try container.encode(territories, forKey: .territories)
+//        try container.encode(units, forKey: .units)
+//        try container.encode(purchaseQueue, forKey: .purchaseQueue)
+//        try container.encode(wallet, forKey: .wallet)
+//    }
 }
 
 public struct PurchaseUnitTransaction: Event {

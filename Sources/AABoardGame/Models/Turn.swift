@@ -1,16 +1,16 @@
 
 public protocol TurnType: AnyObject {
-    var players: [AnyPlayer] { get set }
+    var players: [Player] { get set }
     var board: Board { get set }
     
 }
 
 open class Turn: TurnType, Codable {
-    public var players: [AnyPlayer]
+    public var players: [Player]
     
     public var board: Board
     
-    public init(players: [AnyPlayer], board: Board) {
+    public init(players: [Player], board: Board) {
         self.players = players
         self.board = board
     }

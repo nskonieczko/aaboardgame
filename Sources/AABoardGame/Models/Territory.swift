@@ -12,7 +12,7 @@ public class Territory: Hashable, Equatable, Codable {
     
     public let name: String
     public var identifier = TerritoryID()
-    public var owner: AnyPlayer?
+    public var owner: Player?
     public var units: [AnyUnit] = []
     public var adjacentTerritories: Set<TerritoryID>
     // IPCs - Industial Production Certificates

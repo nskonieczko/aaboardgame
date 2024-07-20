@@ -1,4 +1,4 @@
-open class Board: BoardRequirement {
+open class Board: AnyBoard {
     open var territories: Set<Territory>
     
     public init(territories: Set<Territory>) {

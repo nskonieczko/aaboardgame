@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol GameStateType: AnyObject, Codable {
-    var players: [AnyPlayer] { get }
+    var players: [Player] { get }
     var board: Board { get }
     var gameHistory: [String] { get }
     
@@ -10,11 +10,11 @@ public protocol GameStateType: AnyObject, Codable {
 
 public class GameState: GameStateType {
     public var board: Board
-    public var players: [AnyPlayer] = []
+    public var players: [Player] = []
     public var gameHistory: [String] = []
 //    public var currentPhase: TurnPhase = .beginningOfTurn
     
-    public init(board: Board, players: [AnyPlayer], gameHistory: [String] = []) {
+    public init(board: Board, players: [Player], gameHistory: [String] = []) {
         self.board = board
         self.gameHistory = gameHistory
         self.players = players
