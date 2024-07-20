@@ -1,34 +1,29 @@
 import Foundation
 
-public class Territory: Hashable, Equatable {
-    public enum Category: String {
+public typealias TerritoryID = UUID
+
+public class Territory: Hashable, Equatable, Codable {
+    public enum Category: String, Codable {
         case land
         case sea
         case inpassable
         case unknown
     }
     
-    let name: String
-    var owner: Player?
-    var units: Set<Unit> = []
-    var adjacentTerritories: Set<Territory> = []
-    var industrialOutput: Int = 0
-    var `type`: Territory.Category = .unknown
+    public let name: String
+    public var identifier = TerritoryID()
+    public var owner: AnyPlayer?
+    public var units: [AnyUnit] = []
+    public var adjacentTerritories: Set<TerritoryID>
+    // IPCs - Industial Production Certificates
+    public var industrialOutput: Int
     
-    public init(name: String) {
+//    var `type`: Territory.Category = .unknown
+    
+    public init(name: String, industrialOutput: Int, adjacentTerritories: Set<TerritoryID> = []) {
         self.name = name
-    }
-    
-    public func addUnit(unit: Unit) {
-        units.insert(unit)
-    }
-    
-    public func removeUnit(unit: Unit) {
-        units.remove(unit)
-    }
-    
-    public func changeOwner(newOwner: Player) {
-        self.owner = newOwner
+        self.adjacentTerritories = adjacentTerritories
+        self.industrialOutput = industrialOutput
     }
     
     public static func == (lhs: Territory, rhs: Territory) -> Bool {
