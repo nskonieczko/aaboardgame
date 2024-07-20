@@ -29,9 +29,7 @@ public class EventBus {
     
     private init() { }
     
-    // Dictionary to hold subscribers for each event type
     private var subscribers: [EventType: [(any Eventable) -> Void]] = [:]
-    
     
     public func subscribe<T: Eventable>(for eventTypes: EventType...) -> AsyncEventStream<T> {
         return AsyncStream { continuation in
@@ -51,7 +49,6 @@ public class EventBus {
         }
     }
     
-    // Method to notify subscribers of an event
     public func notify<T: Eventable>(eventType: EventType, event: Event<T>) {
         guard let eventSubscribers = subscribers[eventType] else {
             return
