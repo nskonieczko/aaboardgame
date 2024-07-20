@@ -4,9 +4,18 @@ import Foundation
 
 @testable import AABoardGame
 
+struct EndOfTurnModel: Eventable {
+    var id: UUID = UUID()
+}
+
+struct BeginningOfTurnModel: Eventable {
+    var id: UUID = UUID()
+}
+
+
 final class EventBusTests: XCTestCase {
-    let expectedEvent = EndOfTurnEvent()
-    let expectedBeginningEvent = EndOfTurnEvent()
+    let expectedEndOfTurnEvent = EndOfTurnModel()
+    let expectedBeginningEvent = BeginningOfTurnModel()
     
     var eventBus: EventBus { EventBus.shared }
     
@@ -15,38 +24,89 @@ final class EventBusTests: XCTestCase {
     var c = Territory(name: "C", industrialOutput: 1)
     var d = Territory(name: "D", industrialOutput: 1)
     
+    func testSingleEventTypeSubscription() {
+        let expectation = self.expectation(description: "Subscriber should receive the event")
+        let endOfTurnModel = EndOfTurnModel()
+        let event = Event(id: UUID(), model: endOfTurnModel)
+        
+        let stream: AsyncStream<Event<EndOfTurnModel>> = eventBus.subscribe(for: .endOfTurn)
+        
+        Task {
+            for await receivedEvent in stream {
+                XCTAssertEqual(receivedEvent.model.id, endOfTurnModel.id)
+                expectation.fulfill()
+                break
+            }
+        }
+        
+        eventBus.notify(eventType: .endOfTurn, event: event)
+        
+        waitForExpectations(timeout: 1, handler: nil)
+    }
+    
     func test_subscribeAndListen() throws {
         let expectation = XCTestExpectation(description: "Bus test")
         expectation.expectedFulfillmentCount = 3
         
-        let stream = eventBus.subscribe(EndOfTurnEvent.self)
-        let beginningStream = eventBus.subscribe(BeginningOfTurnEvent.self)
+        let stream: AsyncEventStream<EndOfTurnModel> = eventBus.subscribe(for: .endOfTurn)
+        let beginningStream: AsyncEventStream<BeginningOfTurnModel> = eventBus.subscribe(for: .beginningOfTurn)
+        
+        let endOfTurnModel = EndOfTurnModel()
+        let event = Event(id: UUID(), model: endOfTurnModel)
         
         Task {
             for await event in stream {
-                debugPrint("Received event: \(event.name)")
-                #expect(event.id == expectedEvent.id)
+                debugPrint("Received event: \(event.id)")
+                #expect(event.id == expectedEndOfTurnEvent.id)
                 
                 expectation.fulfill()
             }
             
             for await event in beginningStream {
-                debugPrint("Received event: \(event.name)")
-                XCTFail("should not get this")
+                debugPrint("Received event: \(event.id)")
+                #expect(event.id == expectedBeginningEvent.id)
             }
         }
         
         Task {
-            eventBus.post(expectedBeginningEvent)
-            eventBus.post(expectedEvent)
+            eventBus.notify(eventType: .beginningOfTurn, event: event)
+            eventBus.notify(eventType: .endOfTurn, event: event)
+            eventBus.notify(eventType: .endOfTurn, event: event)
             
-            DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + 4.0) {
-                self.eventBus.post(self.expectedEvent)
+            DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + 1.0) {
+                self.eventBus.notify(eventType: .endOfTurn, event: event)
             }
         }
         
         wait(for: [expectation], timeout: 5.0)
     }
+    
+//    func test_subscribeAndListen_multiple() throws {
+//        let expectation = XCTestExpectation(description: "Bus test")
+//        expectation.expectedFulfillmentCount = 3
+//        
+//        let stream: AsyncStream<Event> = eventBus.subscribe(.endOfTurn(expectedEvent))
+//        
+//        Task {
+//            for await event in stream {
+//                debugPrint("Received event: \(event.name)")
+//                #expect(event.id == expectedEvent.id)
+//                
+//                expectation.fulfill()
+//            }
+//        }
+//        
+//        Task {
+//            eventBus.post(expectedBeginningEvent)
+//            eventBus.post(expectedEvent)
+//            
+//            DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + 4.0) {
+//                self.eventBus.post(self.expectedEvent)
+//            }
+//        }
+//        
+//        wait(for: [expectation], timeout: 5.0)
+//    }
     
     func test_territoryEncoder() throws {
         struct TerritoryResponse: Codable {

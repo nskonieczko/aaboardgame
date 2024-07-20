@@ -72,18 +72,6 @@ public class Player: AnyPlayer {
 //    }
 }
 
-public struct PurchaseUnitTransaction: Event {
-    public let id: UUID = UUID()
-    public let numberOfUnits: Int
-//    public let `type`: Territory.Category
-    public let territory: Territory
-}
-
-public struct NewPhase: Event {
-    public let id: UUID = UUID()
-    public let phase: any Sequence
-}
-
 public enum TerrainType {
     case land, water
 }

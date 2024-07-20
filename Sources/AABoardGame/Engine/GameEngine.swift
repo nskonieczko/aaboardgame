@@ -22,7 +22,6 @@ turnsequence:
 
 public class GameEngine {
     private var gameState: GameStateType
-    private var eventBusSubscriber: AnyPublisher<any Event, EventBusError>?
     
     private var board: Board {
         gameState.board
@@ -46,10 +45,7 @@ public class GameEngine {
     
     private func subscribe() {
         do {
-            eventBusSubscriber = try EventBus.shared.subscribe(to: EndOfTurnEvent.self)
-                .map { $0 as any Event }
-                .eraseToAnyPublisher()
-            
+//            let eventBusStream: AsyncEventStream = EventBus.shared.subscribe(EndOfTurnEvent.self)
         } catch {
             debugPrint("Issue subscribing")
         }
