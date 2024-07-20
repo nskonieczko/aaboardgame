@@ -20,8 +20,6 @@ turnsequence:
    : income tracker, bonus incomes, add up all terrirories economic value.
 */
 
-
-
 public class GameEngine {
     private var gameState: GameStateType
     private var eventBusSubscriber: AnyPublisher<any Event, EventBusError>?
@@ -39,6 +37,11 @@ public class GameEngine {
         initializePlayers()
         // Additional game start logic
         // main game loop
+        
+        while !gameState.isGameOver {
+            // main game loop bruh
+            
+        }
     }
     
     private func subscribe() {

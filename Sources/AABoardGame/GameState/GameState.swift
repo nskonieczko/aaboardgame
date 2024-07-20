@@ -4,6 +4,7 @@ public protocol GameStateType: AnyObject, Codable {
     var players: [Player] { get }
     var board: Board { get }
     var gameHistory: [String] { get }
+    var isGameOver: Bool { get }
     
     func saveGame() throws -> Bool
 }
@@ -12,6 +13,11 @@ public class GameState: GameStateType {
     public var board: Board
     public var players: [Player] = []
     public var gameHistory: [String] = []
+
+    public var isGameOver: Bool {
+        false
+    }
+    
 //    public var currentPhase: TurnPhase = .beginningOfTurn
     
     public init(board: Board, players: [Player], gameHistory: [String] = []) {
