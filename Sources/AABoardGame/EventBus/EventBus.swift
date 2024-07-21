@@ -7,21 +7,23 @@ public enum EventBusError: Error {
     case issueLocatingPublisher
 }
 
-public enum EventType: Codable {
+public enum EventTopic: Codable, Sendable {
     case endOfTurn
     case beginningOfTurn
 }
 
-public protocol IdentifiableEvent {
-    var id: UUID { get }
+public typealias Eventable = Codable & Identifiable & Sendable
+public typealias EventDataModelType = Codable & Identifiable & Sendable
+public typealias AsyncEventStream<T: EventDataModelType> = AsyncStream<Event<T>>
+
+public struct Event<T: EventDataModelType>: Eventable {
+    public var id: UUID = UUID()
+    public var topic: EventTopic
+    public var model: T
 }
 
-public typealias Eventable = IdentifiableEvent & Codable & Identifiable & Sendable
-public typealias AsyncEventStream<T: Eventable> = AsyncStream<Event<T>>
-
-public struct Event<T: Eventable>: Eventable {
-    public var id: UUID
-    public var model: T
+public struct EventDataModel: EventDataModelType {
+    public var id: UUID = UUID()
 }
 
 public class EventBus {
@@ -29,30 +31,39 @@ public class EventBus {
     
     private init() { }
     
-    private var subscribers: [EventType: [(any Eventable) -> Void]] = [:]
+    public var subscribers: [EventTopic: [(any Eventable) -> Void]] = [:]
     
-    public func subscribe<T: Eventable>(for eventTypes: EventType...) -> AsyncEventStream<T> {
+    public func subscribe<T: Eventable>(for topics: EventTopic...) -> AsyncEventStream<T> {
         return AsyncStream { continuation in
-            for eventType in eventTypes {
-                if subscribers[eventType] == nil {
-                    subscribers[eventType] = []
-                }
-            
-                subscribers[eventType]?.append { event in
+            for topic in topics {
+                let subscriber: (any Eventable) -> Void = { event in
                     if let event = event as? Event<T> {
                         continuation.yield(event)
                     }
                 }
+                
+                if subscribers[topic] == nil {
+                    subscribers[topic] = []
+                }
+                
+                subscribers[topic]?.append(subscriber)
+                
+                continuation.onTermination = { [weak self] _ in
+                    self?.subscribers[topic]?.removeAll(where: { $0 as AnyObject === subscriber as AnyObject })
+                    if self?.subscribers[topic]?.isEmpty == true {
+                        self?.subscribers.removeValue(forKey: topic)
+                    }
+                }
             }
-            
-            continuation.onTermination = { @Sendable _ in }
         }
     }
     
-    public func notify<T: Eventable>(eventType: EventType, event: Event<T>) {
+    public func notify<T: Eventable>(eventType: EventTopic, event: Event<T>) {
         guard let eventSubscribers = subscribers[eventType] else {
             return
         }
+        
+        debugPrint("The following subscribers: \(eventSubscribers)")
         
         for subscriber in eventSubscribers {
             subscriber(event)
