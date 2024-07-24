@@ -7,7 +7,8 @@ let package = Package(
     name: "AABoardGame",
     platforms: [
         .iOS(.v17),
-        .visionOS(.v1)
+        .visionOS(.v1),
+        .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.

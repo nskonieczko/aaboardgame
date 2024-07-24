@@ -21,14 +21,16 @@ turnsequence:
 */
 
 public class GameEngine {
+    private var plugins: [GameStatePluginType] = []
     private var gameState: GameStateType
     
     private var board: Board {
         gameState.board
     }
     
-    public init(gameState: GameStateType) {
+    public init(gameState: GameStateType, plugins: [GameStatePluginType] = []) {
         self.gameState = gameState
+        self.plugins = plugins
     }
     
     public func startGame() {
@@ -40,7 +42,12 @@ public class GameEngine {
         while !gameState.isGameOver {
             // main game loop bruh
             
+            // check end of game
+            let isEndOfGameArray = plugins.map { $0.isEndOfGame(with: gameState) }
+            // then do some break shit
         }
+        
+        // Declare winner
     }
     
     private func subscribe() {

@@ -17,6 +17,7 @@ public enum PlayerError: Error {
 
 internal protocol AnyPlayer: AnyObject, Codable {
     var id: UUID { get }
+    var country: Country { get }
     var name: String { get }
     var territories: Set<Territory>  { get set }
     var units: [AnyUnit]  { get set }
@@ -25,14 +26,16 @@ internal protocol AnyPlayer: AnyObject, Codable {
 }
 
 public class Player: AnyPlayer {
+    public var country: Country
     public var id: UUID
     public var name: String
     public var territories: Set<Territory>
     public var units: [AnyUnit]
     public var purchaseQueue: [AnyUnit]
     public var wallet: Int
-
-    public init(id: UUID = UUID(), 
+    
+    public init(id: UUID = UUID(),
+                country: Country,
                 name: String,
                 territories: Set<Territory> = [],
                 units: [AnyUnit] = [],
@@ -45,31 +48,8 @@ public class Player: AnyPlayer {
         self.units = units
         self.purchaseQueue = purchaseQueue
         self.wallet = wallet
+        self.country = country
     }
-//    
-//    enum CodingKeys: String, CodingKey {
-//        case id, name, territories, units, purchaseQueue, wallet
-//    }
-
-//    public required init(from decoder: Decoder) throws {
-//        let container = try decoder.container(keyedBy: CodingKeys.self)
-//        id = try container.decode(UUID.self, forKey: .id)
-//        name = try container.decode(String.self, forKey: .name)
-//        territories = try container.decode(Set<Territory>.self, forKey: .territories)
-//        units = try container.decode([AnyUnit].self, forKey: .units)
-//        purchaseQueue = try container.decode([AnyUnit].self, forKey: .purchaseQueue)
-//        wallet = try container.decode(Int.self, forKey: .wallet)
-//    }
-//
-//    public func encode(to encoder: Encoder) throws {
-//        var container = encoder.container(keyedBy: CodingKeys.self)
-//        try container.encode(id, forKey: .id)
-//        try container.encode(name, forKey: .name)
-//        try container.encode(territories, forKey: .territories)
-//        try container.encode(units, forKey: .units)
-//        try container.encode(purchaseQueue, forKey: .purchaseQueue)
-//        try container.encode(wallet, forKey: .wallet)
-//    }
 }
 
 public enum TerrainType {
