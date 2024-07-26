@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "2F433CD2-0D9B-4CF9-9C63-0F21E17F77DF",
+      "name" : "Test Scheme Action",
+      "options" : {
+        "testExecutionOrdering" : "random"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testExecutionOrdering" : "random"
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "AABoardGameTests",
+        "name" : "AABoardGameTests"
+      }
+    }
+  ],
+  "version" : 1
+}

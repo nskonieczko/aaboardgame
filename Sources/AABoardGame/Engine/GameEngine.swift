@@ -42,8 +42,6 @@ public class GameEngine {
         while !gameState.isGameOver {
             // main game loop bruh
             
-            // check end of game
-            let isEndOfGameArray = plugins.map { $0.isEndOfGame(with: gameState) }
             // then do some break shit
         }
         

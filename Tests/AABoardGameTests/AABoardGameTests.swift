@@ -81,7 +81,7 @@ final class EventBusTests: XCTestCase {
         // Create expectations
         let expectationA = XCTestExpectation(description: "Received event for topic endOfTurn")
         let expectationB = XCTestExpectation(description: "Received event for topic beginningOfTurn")
-        let stream = bus.subscribe(for: .endOfTurn, .beginningOfTurn) as AsyncEventStream<TestModel>
+        let stream: AsyncEventStream<TestModel> = bus.subscribe(for: .endOfTurn, .beginningOfTurn)
         
         // Check for events on the combined stream
         Task {

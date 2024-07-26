@@ -71,13 +71,14 @@ public struct NonCombatAction: TurnAction {
 }
 
 public protocol TurnManagerProtocol {
-    var currentPhase: any TurnSequence { get }
-    var currentPlayer: AAGameOrder { get }
+    var currentSequence: any TurnSequence { get }
+    
     func advance() -> Bool
     func perform(action: any TurnAction) -> Bool
+    func canPerform(action: any TurnAction) -> Bool
 }
 
-public class TurnManager {
+public class TurnManager: TurnManagerProtocol {
     private(set) public var currentSequence: any TurnSequence
 
     public init(initialPhase: any TurnSequence) {
@@ -93,8 +94,17 @@ public class TurnManager {
         }
         return true
     }
-
-    public func perform(action: some TurnAction) -> Bool {
-        currentSequence.equals(action.sequence)
+    
+    public func perform(action: any TurnAction) -> Bool {
+        if canPerform(action: action) {
+            // do stuff
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    public func canPerform(action: any TurnAction) -> Bool {
+        currentSequence.canPerform(action: action)
     }
 }

@@ -8,7 +8,7 @@ public enum AAGameOrder: String, GameOrder {
     case commonwealth
     case france
     case russia
-
+    
     public func next(after order: Order) -> Order {
         let allCases = Self.allCases
         guard let currentIndex = allCases.firstIndex(of: self), currentIndex + 1 < allCases.count else {
@@ -29,11 +29,11 @@ public enum Country: String, CaseIterable, Codable {
     case france
     case russia
     
-    var axis: [Country] {
+    static var axis: Set<Country> {
         [.germany, .japan, .italy]
     }
     
-    var allies: [Country] {
-        Array(Set(Self.allCases).subtracting(axis))
+    static var allies: Set<Country> {
+        Set(Self.allCases).subtracting(axis)
     }
 }

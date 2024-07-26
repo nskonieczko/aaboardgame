@@ -23,6 +23,7 @@ internal protocol AnyPlayer: AnyObject, Codable {
     var units: [AnyUnit]  { get set }
     var purchaseQueue: [AnyUnit]  { get set }
     var wallet: Int { get set }
+    var victoryPoints: Int { get set }
 }
 
 public class Player: AnyPlayer {
@@ -33,6 +34,7 @@ public class Player: AnyPlayer {
     public var units: [AnyUnit]
     public var purchaseQueue: [AnyUnit]
     public var wallet: Int
+    public var victoryPoints: Int
     
     public init(id: UUID = UUID(),
                 country: Country,
@@ -40,7 +42,8 @@ public class Player: AnyPlayer {
                 territories: Set<Territory> = [],
                 units: [AnyUnit] = [],
                 purchaseQueue: [AnyUnit] = [],
-                wallet: Int = 0) {
+                wallet: Int = 0,
+                vistoryPoints: Int = 0) {
         
         self.id = id
         self.name = name
@@ -49,6 +52,7 @@ public class Player: AnyPlayer {
         self.purchaseQueue = purchaseQueue
         self.wallet = wallet
         self.country = country
+        self.victoryPoints = vistoryPoints
     }
 }
 
