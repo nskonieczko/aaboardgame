@@ -7,7 +7,7 @@ public protocol Order {
     func next(after order: Order) -> Order
 }
 
-public protocol TurnSequence: CaseIterable, Equatable, Codable {
+public protocol TurnSequence: CaseIterable, Equatable, Codable, Sendable {
     func next() throws -> any TurnSequence
     func canPerform(action: any TurnAction) -> Bool
 }

@@ -1,8 +1,11 @@
 public enum AATurnSequence: String, TurnSequence {
+    case researchAndDevelopment
     case diplomaticActions
     case purchasingUnits
     case combatActions
     case nonCombatActions
+    case mobilizeNewUnits
+    case collectIncome
     case endOfTurn
     
     public func canPerform(action: any TurnAction) -> Bool {
@@ -17,6 +20,12 @@ public enum AATurnSequence: String, TurnSequence {
             return action is NonCombatAction
         case .endOfTurn:
             return false
+        case .collectIncome:
+            return false
+        case .researchAndDevelopment:
+            return false
+        case .mobilizeNewUnits:
+            return false
         }
     }
     
@@ -28,3 +37,12 @@ public enum AATurnSequence: String, TurnSequence {
         return self == other
     }
 }
+
+/*
+ researchAndDevelopment
+ 
+ - each nation can invest in a technology that is secret from the other side
+ - once they get it, specfic units ill behave differently -
+ - if US has super carrieer, their carrier can hold 3 vs 2 unit and take 3 hits before.
+ 
+ */

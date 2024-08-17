@@ -5,16 +5,29 @@ public protocol GameStateType: AnyObject, Codable {
     var board: Board { get }
     var gameHistory: [String] { get }
     var isGameOver: Bool { get }
+    var turnCount: Int { get }
+    var currentTurnSequence: AATurnSequence { get }
     
     func saveGame() throws -> Bool
 }
 
 public class GameState<Turn: TurnSequence>: GameStateType {
+    public var turnCount: Int = 0
+    public var currentTurnSequence: AATurnSequence = .diplomaticActions
     public var board: Board
     public var players: [Player] = []
     public var gameHistory: [String] = []
     public var turnSequence: Turn
     private var plugins: [GameStatePluginType]
+    public var wars: Set<(Country, Country)> = []
+
+    func declareWar(between country1: Country, and country2: Country) {
+        wars.insert((country1, country2))
+    }
+
+    func isAtWar(_ country1: Country, with country2: Country) -> Bool {
+        return wars.contains((country1, country2)) || wars.contains((country2, country1))
+    }
 
     public var isGameOver: Bool {
         plugins.reduce(false) { isGameOver, plugin in
@@ -75,10 +88,12 @@ public protocol GameStatePluginType: Codable {
 class AxisVictoryPointsPlugin: GameStatePluginType {
     var id: UUID
     var dependencies: [UUID]
+    private let state: GameStateType
 
-    init(id: UUID, dependencies: [UUID] = []) {
+    init(id: UUID, dependencies: [UUID] = [], state: GameStateType) {
         self.id = id
         self.dependencies = dependencies
+        self.state = state
     }
     
     func isEndOfGame(with gameState: GameStateType) -> Bool {
@@ -86,7 +101,9 @@ class AxisVictoryPointsPlugin: GameStatePluginType {
             .filter { Country.axis.contains($0.country) }
             .reduce(0) { $0 + $1.victoryPoints }
         
-        return totalAxisVictoryPoints >= 12
+        return totalAxisVictoryPoints >= 13
+        && state.turnCount == 8
+        && state.currentTurnSequence == .collectIncome
     }
     
     required init(from decoder: Decoder) throws {

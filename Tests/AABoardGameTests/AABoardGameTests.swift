@@ -28,8 +28,8 @@ final class EventBusTests: XCTestCase {
         let expectationB = XCTestExpectation(description: "Received event for topic B")
         
         // Create a Task to subscribe to multiple topics
-        let streamA = bus.subscribe(for: .endOfTurn) as AsyncEventStream<TestModel>
-        let streamB = bus.subscribe(for: .beginningOfTurn) as AsyncEventStream<TestModel>
+        let streamA = bus.subscribe(for: .newPhase) as AsyncEventStream<TestModel>
+        let streamB = bus.subscribe(for: .playerMove) as AsyncEventStream<TestModel>
         
         
         // Check for events on stream A
@@ -111,7 +111,7 @@ final class EventBusTests: XCTestCase {
     
     func testTermination() async throws {
         let subscriptionTask = Task {
-            let stream = bus.subscribe(for: .endOfTurn) as AsyncEventStream<TestModel>
+            _ = bus.subscribe(for: .endOfTurn) as AsyncEventStream<TestModel>
         }
         
         await subscriptionTask.result

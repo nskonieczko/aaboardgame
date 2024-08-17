@@ -7,13 +7,14 @@ public enum EventBusError: Error {
     case issueLocatingPublisher
 }
 
-public enum EventTopic: Codable, Sendable {
-    case endOfTurn
-    case beginningOfTurn
+public enum EventTopic: Sendable, Codable {
+    case newPhase
+    case territoryPurchase
+    case playerMove
 }
 
-public typealias Eventable = Codable & Identifiable & Sendable
-public typealias EventDataModelType = Codable & Identifiable & Sendable
+public typealias Eventable = Codable & Identifiable & Sendable & Hashable
+public typealias EventDataModelType = Codable & Identifiable & Sendable & Hashable
 public typealias AsyncEventStream<T: EventDataModelType> = AsyncStream<Event<T>>
 
 public struct Event<T: EventDataModelType>: Eventable {
@@ -22,7 +23,7 @@ public struct Event<T: EventDataModelType>: Eventable {
     public var model: T
 }
 
-public struct EventDataModel: EventDataModelType {
+public struct DefaultEventModel: EventDataModelType {
     public var id: UUID = UUID()
 }
 
