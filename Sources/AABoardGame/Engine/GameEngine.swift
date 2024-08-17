@@ -49,10 +49,12 @@ public class GameEngine {
     }
     
     private func subscribe() {
-        do {
-//            let eventBusStream: AsyncEventStream = EventBus.shared.subscribe(EndOfTurnEvent.self)
-        } catch {
-            debugPrint("Issue subscribing")
+        let eventBusStream: AsyncEventStream = EventBus.shared.subscribe(for: .action(.attack))
+        
+        Task {
+            for await event in eventBusStream {
+                debugPrint(event)
+            }
         }
     }
     

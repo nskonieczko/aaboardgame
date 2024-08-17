@@ -15,12 +15,16 @@ public protocol TurnAction {
 
 public protocol TurnPhase {
     associatedtype SequenceType: TurnSequence
+    var title: String { get }
+    var description: String { get }
     var phase: SequenceType { get }
     var allowedActions: [any TurnAction] { get }
     func canPerform(action: any TurnAction) -> Bool
 }
 
 struct DiplomaticActionsPhase: TurnPhase {
+    let title: String = "Diplomatic Action"
+    let description: String = "Action Taken to be Diplomatic"
     var phase: AATurnSequence = .diplomaticActions
     var allowedActions: [any TurnAction] = [DiplomaticAction()]
 
@@ -30,6 +34,8 @@ struct DiplomaticActionsPhase: TurnPhase {
 }
 
 struct PurchasingUnitsPhase: TurnPhase {
+    let title: String = "Diplomatic Action"
+    let description: String = "Action Taken to be Diplomatic"
     var phase: AATurnSequence = .purchasingUnits
     var allowedActions: [any TurnAction] = []
 
@@ -41,8 +47,24 @@ struct PurchasingUnitsPhase: TurnPhase {
 public struct DiplomaticAction: TurnAction {
     public typealias SequenceType = AATurnSequence
     public let sequence: SequenceType = .diplomaticActions
+//    public let message: String
+    // handle Russia specific things about delcaring war
+    
     public func perform() {
-        print("Performing Diplomatic Action")
+        /*
+         Any change from the starting diplomatic state.
+         some start at war, if anything changes with that, that would be a diplolomatic
+         strict nutrel territory
+         
+         this is not heavily used
+         you can only make landing of pieces if
+         
+         landing pieces and nuetruel
+         
+         strict nuterul all come together once you attack.
+         */
+        
+        
     }
 }
 
@@ -54,12 +76,49 @@ public struct PurchasingUnitAction: TurnAction {
     }
 }
 
+public struct CollectIncomeAction: TurnAction {
+    public typealias SequenceType = AATurnSequence
+    public let sequence: SequenceType = .mobilizeNewUnits
+    public func perform() {
+        print("Performing Purchasing Unit Action")
+    }
+}
+
+public struct ResearchAndDevelopmentAction: TurnAction {
+    public typealias SequenceType = AATurnSequence
+    public let sequence: SequenceType = .mobilizeNewUnits
+    public func perform() {
+        print("Performing Purchasing Unit Action")
+    }
+}
+
+public struct MobilizeNewUnitsAction: TurnAction {
+    public typealias SequenceType = AATurnSequence
+    public let sequence: SequenceType = .mobilizeNewUnits
+    public func perform() {
+        print("Performing Purchasing Unit Action")
+    }
+}
+
 public struct CombatAction: TurnAction {
     public typealias SequenceType = AATurnSequence
     public let sequence: SequenceType = .combatActions
+    
     public func perform() {
         print("Performing Combat Action")
     }
+    
+    /*
+     
+     Purchasing
+     
+     - listing what units cost
+     - collected invome from previous round.
+     - J1, Japan oes their stuff, collects their IPC.
+     - J2, purchase unites:
+     - just buy units, facilties and research and development.
+     
+     */
 }
 
 public struct NonCombatAction: TurnAction {
@@ -68,6 +127,21 @@ public struct NonCombatAction: TurnAction {
     public func perform() {
         print("Performing Non-Combat Action")
     }
+    
+    /*
+     Planes are the fucky shit
+     - so lets say they have 4 moves, they use 2 to move to 2 territories away. They have to to resolve in their non combat phase otherwise they lose the plane. Its just illegal to to do that.
+     
+     - can only activate friendly nuetrals during the non combat phase.
+     - activation means - move at least one ground unit specfically into that friend nuetral. non strict nuetral
+     - unfriend, friendly and strict
+     - Bulgaria is a pro axis -
+     - strict nuetrals:
+     - Tibet is an example, no activating their units normally. you have to attack and kill the people on their. Once this happens, all other strict nuterals become pro allied or pro axis. Trip wire secenario
+     - Monkey wrench time: some strict nuetral have roundals - portugal - all of these are then porugal.
+     - so they are strict nuterals but, if you attack there is no trip wire.
+     - So if turkey or monogolia become attacked by axis, then the remaining territories become controlled by russia (this is a real rule but just chill bro)
+     */
 }
 
 public protocol TurnManagerProtocol {
@@ -98,6 +172,12 @@ public class TurnManager: TurnManagerProtocol {
     public func perform(action: any TurnAction) -> Bool {
         if canPerform(action: action) {
             // do stuff
+            
+            // Turn Sequence check: done
+            // Player check: todo
+            // Board Check: todo
+            // Game State?: todo
+            
             return true
         } else {
             return false
