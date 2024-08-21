@@ -20,7 +20,20 @@ turnsequence:
    : income tracker, bonus incomes, add up all terrirories economic value.
 */
 
-public class GameEngine {
+extension Encodable {
+    func encoded() -> Data? {
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(self)
+            return data
+        } catch {
+            print("Failed to encode object: \(error)")
+            return nil
+        }
+    }
+}
+
+public class  GameEngine: ObservableObject {
     private var plugins: [GameStatePluginType] = []
     private var gameState: GameStateType
     
@@ -31,6 +44,12 @@ public class GameEngine {
     public init(gameState: GameStateType, plugins: [GameStatePluginType] = []) {
         self.gameState = gameState
         self.plugins = plugins
+        
+        subscribe()
+    }
+    
+    deinit {
+        print()
     }
     
     public func startGame() {
@@ -49,11 +68,27 @@ public class GameEngine {
     }
     
     private func subscribe() {
-        let eventBusStream: AsyncEventStream = EventBus.shared.subscribe(for: .action(.attack))
         
         Task {
+            let eventBusStream = EventBus.shared.subscribe(for: .request(.getTerritory(.unitedStates)))
+    
             for await event in eventBusStream {
-                debugPrint(event)
+                
+                do {
+//                    Task {
+                        let event = try? EventBus.shared.createEvent(
+                            from: .response(.territoryResponse(.unitedStates)),
+                            type: AABoardGame.Territory.self,
+                            data: AABoardGame.Territory(country: .unitedStates, industrialOutput: 77)
+                        )
+                        EventBus.shared.notify(
+                            topic: .response(.territoryResponse(.unitedStates)),
+                            event: event
+                        )
+//                    }
+                } catch {
+                    print(error.localizedDescription)
+                }
             }
         }
     }

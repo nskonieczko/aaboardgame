@@ -21,7 +21,7 @@ public enum AAGameOrder: String, GameOrder {
 public enum Country: String, CaseIterable, Codable, Hashable {
     case germany
     case japan
-    case unitedStates
+    case unitedStates = "United States"
     case unitedKingdom
     case china
     case italy
@@ -30,7 +30,7 @@ public enum Country: String, CaseIterable, Codable, Hashable {
     case russia
     
     /* Diplotmatic situation */
-
+    
     //    static var startingAtWar: Set(Country, Country)
     // france, uk, commonwealth, China -> italy, germany
     // japan -> China
@@ -70,5 +70,9 @@ public enum Country: String, CaseIterable, Codable, Hashable {
     
     static var allies: Set<Country> {
         Set(Self.allCases).subtracting(axis)
+    }
+    
+    var industrialOutput: Int {
+        return 42
     }
 }
