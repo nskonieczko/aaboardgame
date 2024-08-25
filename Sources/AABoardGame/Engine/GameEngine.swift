@@ -33,9 +33,11 @@ extension Encodable {
     }
 }
 
-public class  GameEngine: ObservableObject {
+public class GameEngine: ObservableObject {
     private var plugins: [GameStatePluginType] = []
     private var gameState: GameStateType
+    private var players: [AAPlayer] = []
+    private let turnManager: TurnManager!
     
     private var board: Board {
         gameState.board
@@ -44,8 +46,8 @@ public class  GameEngine: ObservableObject {
     public init(gameState: GameStateType, plugins: [GameStatePluginType] = []) {
         self.gameState = gameState
         self.plugins = plugins
-        
-        subscribe()
+        self.turnManager = TurnManager(initialPhase: .diplomaticActions, gameState: gameState)
+        startGame()
     }
     
     deinit {
@@ -58,38 +60,72 @@ public class  GameEngine: ObservableObject {
         // Additional game start logic
         // main game loop
         
-        while !gameState.isGameOver {
-            // main game loop bruh
-            
-            // then do some break shit
-        }
-        
         // Declare winner
+        
+        subscribe()
     }
     
     private func subscribe() {
-        
         Task {
-            let eventBusStream = EventBus.shared.subscribe(for: .request(.getTerritory(.unitedStates)))
-    
+            let eventBusStream = EventBus.shared.subscribe(
+                for: .request(.getTerritory(.unitedStates)),
+                .userInteraction(.selectPhase)
+            )
+            
             for await event in eventBusStream {
-                
-                do {
-//                    Task {
-                        let event = try? EventBus.shared.createEvent(
-                            from: .response(.territoryResponse(.unitedStates)),
-                            type: AABoardGame.Territory.self,
-                            data: AABoardGame.Territory(country: .unitedStates, industrialOutput: 77)
-                        )
-                        EventBus.shared.notify(
-                            topic: .response(.territoryResponse(.unitedStates)),
-                            event: event
-                        )
-//                    }
-                } catch {
-                    print(error.localizedDescription)
-                }
+                handleEvent(event)
             }
+        }
+    }
+    
+    private func handleEvent(_ event: Event?) {
+        guard let event else {
+            return
+        }
+        
+        switch event.topic {
+        case .request(.getTerritory(.unitedStates)):
+            let event = try? EventBus.shared.createEvent(
+                from: .response(.territoryResponse(.unitedStates)),
+                type: AABoardGame.Territory.self,
+                encodable: AABoardGame.Territory(country: .unitedStates, industrialOutput: 77)
+            )
+            EventBus.shared.notify(
+                topic: .response(.territoryResponse(.unitedStates)),
+                event: event
+            )
+            
+        case .userInteraction(.selectPhase):
+            guard let action = event.action else {
+                return
+            }
+            
+            if turnManager.perform(action: action) {
+                debugPrint("Successfully performed action")
+            }
+            
+        case .action(_):
+            break
+        case .gameEvent(_):
+            break
+        case .userInteraction(.selectToolbar):
+            break
+        case .userInteraction(.selectNextPhase):
+            break
+        case .userInteraction(.endTurn):
+            break
+        case .userInteraction(.selectTerritory(_)):
+            break
+        case .territory(_):
+            break
+        case .request(.getCurrentPhase):
+            break
+        case .response(_):
+            break
+        case .userInteraction(.recenterMap):
+            break
+        case .userInteraction(.recenterMap):
+            break
         }
     }
     

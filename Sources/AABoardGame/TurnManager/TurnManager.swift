@@ -7,10 +7,35 @@
 
 import Foundation
 
-public protocol TurnAction {
+public protocol TurnActionType: Sendable, Codable, Hashable {
     associatedtype Sequence: TurnSequence
-    var sequence: Sequence { get }
+    var runnableDuringSequence: Sequence { get }
+    var id: UUID { get }
     func perform()
+}
+
+
+open class TurnAction: TurnActionType {
+    public typealias Sequence = AATurnSequence
+    public var runnableDuringSequence: Sequence
+    public let id: UUID = UUID()
+    
+    public init(sequence: Sequence) {
+        self.runnableDuringSequence = sequence
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(runnableDuringSequence)
+    }
+    
+    public func perform() {}
+}
+
+extension TurnAction: Equatable {
+    public static func == (lhs: TurnAction, rhs: TurnAction) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 public protocol TurnPhase {
@@ -18,17 +43,38 @@ public protocol TurnPhase {
     var title: String { get }
     var description: String { get }
     var phase: SequenceType { get }
-    var allowedActions: [any TurnAction] { get }
-    func canPerform(action: any TurnAction) -> Bool
+    var allowedActions: [any TurnActionType] { get }
+    func canPerform(action: any TurnActionType) -> Bool
+}
+
+public class ChangePhaseAction: TurnAction {
+    public var toSequence: AATurnSequence
+    
+    public init(to sequence: AATurnSequence) {
+        self.toSequence = sequence
+        super.init(sequence: sequence)
+    }
+    
+    required init(from decoder: any Decoder) throws {
+        fatalError("init(from:) has not been implemented")
+    }
+    
+    override public func perform() {
+        let event = try? EventBus.shared.createEvent(
+            from: .gameEvent(.playerPhaseChanged),
+            encodable: toSequence
+        )
+        EventBus.shared.notify(topic: .gameEvent(.playerPhaseChanged), event: event)
+    }
 }
 
 struct DiplomaticActionsPhase: TurnPhase {
     let title: String = "Diplomatic Action"
     let description: String = "Action Taken to be Diplomatic"
     var phase: AATurnSequence = .diplomaticActions
-    var allowedActions: [any TurnAction] = [DiplomaticAction()]
-
-    func canPerform(action: any TurnAction) -> Bool {
+    var allowedActions: [any TurnActionType] = [DiplomaticAction()]
+    
+    func canPerform(action: any TurnActionType) -> Bool {
         return allowedActions.contains(where: { type(of: $0) == type(of: action) })
     }
 }
@@ -37,17 +83,18 @@ struct PurchasingUnitsPhase: TurnPhase {
     let title: String = "Diplomatic Action"
     let description: String = "Action Taken to be Diplomatic"
     var phase: AATurnSequence = .purchasingUnits
-    var allowedActions: [any TurnAction] = []
-
-    func canPerform(action: any TurnAction) -> Bool {
+    var allowedActions: [any TurnActionType] = []
+    
+    func canPerform(action: any TurnActionType) -> Bool {
         return allowedActions.contains(where: { type(of: $0) == type(of: action) })
     }
 }
 
-public struct DiplomaticAction: TurnAction {
+public struct DiplomaticAction: TurnActionType {
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .diplomaticActions
-//    public let message: String
+    public let runnableDuringSequence: SequenceType = .diplomaticActions
+    public let id: UUID = UUID()
+    //    public let message: String
     // handle Russia specific things about delcaring war
     
     public func perform() {
@@ -68,41 +115,47 @@ public struct DiplomaticAction: TurnAction {
     }
 }
 
-public struct PurchasingUnitAction: TurnAction {
+public struct PurchasingUnitAction: TurnActionType {
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .purchasingUnits
+    public let runnableDuringSequence: SequenceType = .purchasingUnits
+    public let id: UUID = UUID()
+    
     public func perform() {
         print("Performing Purchasing Unit Action")
     }
 }
 
-public struct CollectIncomeAction: TurnAction {
+public struct CollectIncomeAction: TurnActionType {
+    public let id: UUID = UUID()
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .mobilizeNewUnits
+    public let runnableDuringSequence: SequenceType = .mobilizeNewUnits
     public func perform() {
         print("Performing Purchasing Unit Action")
     }
 }
 
-public struct ResearchAndDevelopmentAction: TurnAction {
+public struct ResearchAndDevelopmentAction: TurnActionType {
+    public let id: UUID = UUID()
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .mobilizeNewUnits
+    public let runnableDuringSequence: SequenceType = .mobilizeNewUnits
     public func perform() {
         print("Performing Purchasing Unit Action")
     }
 }
 
-public struct MobilizeNewUnitsAction: TurnAction {
+public struct MobilizeNewUnitsAction: TurnActionType {
+    public let id: UUID = UUID()
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .mobilizeNewUnits
+    public let runnableDuringSequence: SequenceType = .mobilizeNewUnits
     public func perform() {
         print("Performing Purchasing Unit Action")
     }
 }
 
-public struct CombatAction: TurnAction {
+public struct CombatAction: TurnActionType {
+    public let id: UUID = UUID()
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .combatActions
+    public let runnableDuringSequence: SequenceType = .combatActions
     
     public func perform() {
         print("Performing Combat Action")
@@ -121,9 +174,10 @@ public struct CombatAction: TurnAction {
      */
 }
 
-public struct NonCombatAction: TurnAction {
+public struct NonCombatAction: TurnActionType {
+    public let id: UUID = UUID()
     public typealias SequenceType = AATurnSequence
-    public let sequence: SequenceType = .nonCombatActions
+    public let runnableDuringSequence: SequenceType = .nonCombatActions
     public func perform() {
         print("Performing Non-Combat Action")
     }
@@ -145,23 +199,29 @@ public struct NonCombatAction: TurnAction {
 }
 
 public protocol TurnManagerProtocol {
-    var currentSequence: any TurnSequence { get }
+    var currentSequence: AATurnSequence { get }
     
     func advance() -> Bool
-    func perform(action: any TurnAction) -> Bool
-    func canPerform(action: any TurnAction) -> Bool
+    func perform(action: TurnAction) -> Bool
+    func canPerform(action: TurnAction) -> Bool
 }
 
 public class TurnManager: TurnManagerProtocol {
-    private(set) public var currentSequence: any TurnSequence
-
-    public init(initialPhase: any TurnSequence) {
+    private(set) public var currentSequence: AATurnSequence
+    private let gameState: GameStateType
+    
+    public init(initialPhase: AATurnSequence, gameState: GameStateType) {
         self.currentSequence = initialPhase
+        self.gameState = gameState
+        
+        Task {
+            await listeners()
+        }
     }
-
+    
     public func advance() -> Bool {
         do {
-            currentSequence = try currentSequence.next()
+            currentSequence = try currentSequence.next() as! AATurnSequence
         } catch {
             // Handle error
             return false
@@ -169,7 +229,7 @@ public class TurnManager: TurnManagerProtocol {
         return true
     }
     
-    public func perform(action: any TurnAction) -> Bool {
+    public func perform(action: TurnAction) -> Bool {
         if canPerform(action: action) {
             // do stuff
             
@@ -177,6 +237,20 @@ public class TurnManager: TurnManagerProtocol {
             // Player check: todo
             // Board Check: todo
             // Game State?: todo
+            switch action {
+            case action as ChangePhaseAction:
+                guard let newAction = action as? ChangePhaseAction else {
+                    return false
+                }
+                
+                currentSequence = newAction.toSequence
+                gameState.currentTurnSequence = newAction.toSequence
+                newAction.perform()
+                return true
+                
+            default:
+                fatalError("You did not implement the \(action) case")
+            }
             
             return true
         } else {
@@ -184,7 +258,35 @@ public class TurnManager: TurnManagerProtocol {
         }
     }
     
-    public func canPerform(action: any TurnAction) -> Bool {
-        currentSequence.canPerform(action: action)
+    public func canPerform(action: TurnAction) -> Bool {
+        if action is ChangePhaseAction {
+            return true
+        }
+        
+        guard action.runnableDuringSequence == currentSequence else {
+            return false
+        }
+        
+        return true
+    }
+    
+    private func listeners() async {
+        let stream = EventBus.shared.subscribe(for: .request(.getCurrentPhase), .userInteraction(.selectPhase))
+        
+        Task {
+            do {
+                for await event in stream {
+                    let eventResponse = try EventBus.shared.createEvent(
+                        from: .response(.currentPhaseResponse),
+                        type: AATurnSequence.self,
+                        encodable: currentSequence
+                    )
+                    
+                    EventBus.shared.notify(topic: .response(.currentPhaseResponse), event: eventResponse)
+                }
+            } catch {
+                print("Error handling event: \(error)")
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ public protocol GameStateType: AnyObject, Codable {
     var gameHistory: [String] { get }
     var isGameOver: Bool { get }
     var turnCount: Int { get }
-    var currentTurnSequence: AATurnSequence { get }
+    var currentTurnSequence: AATurnSequence { get set }
     
     func saveGame() throws -> Bool
 }
