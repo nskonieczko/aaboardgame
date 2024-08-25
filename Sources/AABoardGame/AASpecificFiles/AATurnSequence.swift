@@ -1,32 +1,15 @@
-public enum AATurnSequence: String, TurnSequence {
-    case researchAndDevelopment
-    case diplomaticActions
-    case purchasingUnits
-    case combatActions
-    case nonCombatActions
-    case mobilizeNewUnits
-    case collectIncome
-    case endOfTurn
+public enum AATurnSequence: String, TurnSequence, Codable {
+    case researchAndDevelopment = "R&D"
+    case diplomaticActions = "Diplomatic"
+    case purchasingUnits = "Purchasing"
+    case combatActions = "Combat"
+    case nonCombatActions = "Non-Combat"
+    case mobilizeNewUnits = "Mobiling Units"
+    case collectIncome = "Collect Income"
+    case endOfTurn = "End of Turn"
     
-    public func canPerform(action: any TurnAction) -> Bool {
-        switch self {
-        case .diplomaticActions:
-            return action is DiplomaticAction
-        case .purchasingUnits:
-            return action is PurchasingUnitAction
-        case .combatActions:
-            return action is CombatAction
-        case .nonCombatActions:
-            return action is NonCombatAction
-        case .collectIncome:
-            return action is CollectIncomeAction
-        case .researchAndDevelopment:
-            return action is ResearchAndDevelopmentAction
-        case .mobilizeNewUnits:
-            return action is MobilizeNewUnitsAction
-        case .endOfTurn:
-            return false
-        }
+    var title: String {
+        rawValue
     }
     
     public func isEqual(to other: any TurnSequence) -> Bool {

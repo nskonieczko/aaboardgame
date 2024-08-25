@@ -56,11 +56,116 @@ final class EventBusTests: XCTestCase {
         let eventA = Event(topic: .action(.attack), data: dataA)
         let eventB = Event(topic: .gameEvent(.newPhase), data: dataB)
         
-        bus.notify(eventType: .action(.attack), event: eventA)
-        bus.notify(eventType: .gameEvent(.newPhase), event: eventB)
+        bus.notify(topic: .action(.attack), event: eventA)
+        bus.notify(topic: .gameEvent(.newPhase), event: eventB)
+        
+        await fulfillment(of: [expectationA , expectationB], timeout: 5.0)
+        //        wait(for: [expectationA, expectationB], timeout: 5.0)
+    }
+    
+    func testPingPongMessages() async throws {
+        let expectationA = XCTestExpectation(description: "Received event for topic A")
+        let expectationB = XCTestExpectation(description: "Received event for topic B")
+        
+        let dataPayloadA = try JSONEncoder().encode("data for things A")
+        let dataPayloadB = try JSONEncoder().encode("data for things B")
+        
+        let dataA = AnyEncodable(data: dataPayloadA, type: String.self)!
+        let dataB = AnyEncodable(data: dataPayloadB, type: String.self)!
+        
+        let requestStream = EventBus.shared.subscribe(for: .request(.getTerritory(.unitedStates)))
+        let responseStream = EventBus.shared.subscribe(for: .response(.territoryResponse(.unitedStates)))
+        
+        Task {
+            for await event in requestStream {
+                print("Received request event: \(event)")
+                switch event.topic {
+                case .request(.getTerritory(.unitedStates)):
+                    XCTAssertEqual(event.data, dataA)
+                    expectationA.fulfill()
+                    
+                    let responseEvent = Event(topic: .response(.territoryResponse(.unitedStates)), data: dataB)
+                    EventBus.shared.notify(topic: .response(.territoryResponse(.unitedStates)), event: responseEvent)
+                    
+                default:
+                    XCTFail("Unexpected event topic: \(event.topic)")
+                }
+            }
+        }
+        Task {
+            for await event in responseStream {
+                print("Received response event: \(event)")
+                switch event.topic {
+                case .response(.territoryResponse(.unitedStates)):
+                    XCTAssertEqual(event.data, dataB)
+                    expectationB.fulfill()
+                    
+                default:
+                    XCTFail("Unexpected event topic: \(event.topic)")
+                }
+            }
+        }
+        
+        let requestEvent = Event(topic: .request(.getTerritory(.unitedStates)), data: dataA)
+        EventBus.shared.notify(topic: .request(.getTerritory(.unitedStates)), event: requestEvent)
         
         await fulfillment(of: [expectationA, expectationB], timeout: 5.0)
-        //        wait(for: [expectationA, expectationB], timeout: 5.0)
+    }
+    
+    func testPingPongMessagesCurrentPhase() async throws {
+        let expectationA = XCTestExpectation(description: "Received event for topic A")
+        let expectationB = XCTestExpectation(description: "Received event for topic B")
+        
+        let dataPayloadA = try JSONEncoder().encode("data for things A")
+        let dataPayloadB = try JSONEncoder().encode("data for things B")
+        
+        let dataA = AnyEncodable(data: dataPayloadA, type: String.self)!
+        let dataB = AnyEncodable(data: dataPayloadB, type: String.self)!
+        
+        let requestStream = EventBus.shared.subscribe(for: .request(.getCurrentPhase))
+        let responseStream = EventBus.shared.subscribe(for: .response(.currentPhaseResponse))
+        
+        Task {
+            for await event in requestStream {
+                XCTAssertEqual(event.data, dataA)
+                expectationA.fulfill()
+                
+                let responseEvent = Event(topic: .response(.currentPhaseResponse), data: dataB)
+                EventBus.shared.notify(topic: .response(.currentPhaseResponse), event: responseEvent)
+            }
+        }
+        
+        Task {
+            for await event in responseStream {
+                XCTAssertEqual(event.data, dataB)
+                expectationB.fulfill()
+            }
+        }
+        
+        let requestEvent = Event(topic: .request(.getCurrentPhase), data: dataA)
+        EventBus.shared.notify(topic: .request(.getCurrentPhase), event: requestEvent)
+        
+        await fulfillment(of: [expectationA, expectationB], timeout: 5.0)
+    }
+ 
+    
+    func testCreateEventWithEncodable() {
+        struct TestModel: Codable {
+            let value: String
+        }
+        
+        let topic = EventTopic.userInteraction(.selectToolbar)
+        let model = TestModel(value: "Test Model")
+        
+        do {
+            let event = try bus.createEvent(from: topic, type: TestModel.self, encodable: model)
+            XCTAssertEqual(event.topic, topic)
+            XCTAssertNotNil(event.data)
+            let decodedModel = try JSONDecoder().decode(TestModel.self, from: event.data!.data)
+            XCTAssertEqual(decodedModel.value, "Test Model")
+        } catch {
+            XCTFail("Event creation with encodable data failed: \(error)")
+        }
     }
     
     func testNoSubscribers() {
@@ -348,10 +453,10 @@ final class TerritoryTests {
         ]
     }
     """.data(using: .utf8)!
-    var a = Territory(name: "A", industrialOutput: 1)
-    var b = Territory(name: "B", industrialOutput: 1)
-    var c = Territory(name: "C", industrialOutput: 1)
-    var d = Territory(name: "D", industrialOutput: 1)
+    var a = Territory(country: .unitedStates, industrialOutput: 1)
+    var b = Territory(country: .unitedStates, industrialOutput: 1)
+    var c = Territory(country: .unitedStates, industrialOutput: 1)
+    var d = Territory(country: .unitedStates, industrialOutput: 1)
     
     struct TerritoryResponse: Codable {
         let territories: [Territory]
@@ -384,5 +489,76 @@ final class TerritoryTests {
         }
         
         FileManager.default.createFile(atPath: "/tmp/test.json", contents: data)
+    }
+}
+
+
+class EventBus2Tests: XCTestCase {
+    var eventBus: EventBus!
+
+    override func setUp() {
+        super.setUp()
+        eventBus = EventBus.shared
+    }
+
+    func testEventTopicNotification() async throws {
+        let expectationA = XCTestExpectation(description: "Received event for topic A")
+        let expectationB = XCTestExpectation(description: "Received event for topic B")
+        
+        // Prepare data payloads
+        let dataPayloadA = try JSONEncoder().encode("data for things A")
+        let dataPayloadB = try JSONEncoder().encode("data for things B")
+        
+        // Create event data
+        let dataA = AnyEncodable(data: dataPayloadA, type: String.self)!
+        let dataB = AnyEncodable(data: dataPayloadB, type: String.self)!
+        
+        // Create request and response streams
+        let requestStream = eventBus.subscribe(for: .request(.getTerritory(.unitedStates)))
+        let responseStream = eventBus.subscribe(for: .response(.territoryResponse(.unitedStates)))
+        
+        // Task to handle event reception
+        Task {
+            // Handle request event
+            for await event in requestStream {
+                switch event.topic {
+                case .request(.getTerritory(.unitedStates)):
+                    XCTAssertEqual(event.data, dataA)
+                    expectationA.fulfill() // Fulfill expectation for request event
+                    
+                    // Create and notify response event
+                    let responseEvent = Event(
+                        topic: .response(.territoryResponse(.unitedStates)),
+                        data: dataB
+                    )
+                    eventBus.notify(topic: .response(.territoryResponse(.unitedStates)), event: responseEvent)
+                    
+                default:
+                    XCTFail("Unexpected event topic")
+                }
+            }
+            
+            // Handle response event
+            for await event in responseStream {
+                switch event.topic {
+                case .response(.territoryResponse(.unitedStates)):
+                    XCTAssertEqual(event.data, dataB)
+                    expectationB.fulfill() // Fulfill expectation for response event
+                    
+                default:
+                    XCTFail("Unexpected event topic")
+                }
+            }
+        }
+        
+        // Create and notify request event
+        let requestEvent = Event(
+            topic: .request(.getTerritory(.unitedStates)),
+            data: dataA
+        )
+        eventBus.notify(topic: .request(.getTerritory(.unitedStates)), event: requestEvent)
+        
+        // Wait for expectations
+        await fulfillment(of: [expectationA, expectationB], timeout: 5.0)
     }
 }

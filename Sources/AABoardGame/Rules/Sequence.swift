@@ -9,7 +9,7 @@ public protocol Order {
 
 public protocol TurnSequence: CaseIterable, Equatable, Codable, Sendable {
     func next() throws -> any TurnSequence
-    func canPerform(action: any TurnAction) -> Bool
+//    func canPerform(action: any TurnActionType) -> Bool
 }
 
 /*
